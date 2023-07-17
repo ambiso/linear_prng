@@ -1,3 +1,5 @@
+use std::{io::{BufWriter, Write, Stdout, stdout}, fs::File};
+
 struct XorShift128 {
     x: u32,
     y: u32,
@@ -27,10 +29,10 @@ struct NonLinearPrng {
 impl NonLinearPrng {
     fn next_8bits(&mut self) -> u32 {
         let iters = self.prng.next();
-        for _ in 0..iters % (1 << 10) {
+        for _ in 0..iters % 2 {
             self.prng.next();
         }
-        self.prng.next() % (1 << 8)
+        self.prng.next() & 1
     }
 
     fn next(&mut self) -> u32 {
@@ -43,6 +45,21 @@ impl NonLinearPrng {
 }
 
 fn main() {
+    // for iters in 2u64..=1024 {
+    //     for leakage in (1u64..32).rev() {
+    //         let state_size = 128;
+    //         let gaps = state_size / leakage;
+    //         let gap_size = iters;
+    //         let security = gaps * gap_size.ilog2() as u64;
+    //         if security >= 128 {
+    //             let runtime = 32 / leakage * iters;
+    //             println!("iters={iters} leakage={leakage} security={security} runtime={runtime}");
+    //             break;
+    //         }
+    //     }
+    // }
+
+
     let mut rng = NonLinearPrng {
         prng: XorShift128 {
             x: 0xdeadbeef,
@@ -51,7 +68,9 @@ fn main() {
             w: 0xdefe47ed,
         },
     };
-    for _ in 0..1000 {
-        println!("{}", rng.next());
+    let stdout = stdout().lock();
+    let mut bw = BufWriter::new(stdout);
+    for _ in 0.. {
+        bw.write_all(rng.next().to_ne_bytes().as_slice()).unwrap();
     }
 }
